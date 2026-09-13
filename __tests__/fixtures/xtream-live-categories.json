@@ -1,0 +1,27 @@
+[
+  {
+    "category_id": "2150",
+    "category_name": "Accout Information",
+    "parent_id": 0
+  },
+  {
+    "category_id": "119",
+    "category_name": "EU | UK SPORT",
+    "parent_id": 0
+  },
+  {
+    "category_id": "120",
+    "category_name": "EU | UK LIVE EVENTS-PPV",
+    "parent_id": 0
+  },
+  {
+    "category_id": "121",
+    "category_name": "EU | UK SPORT 50 FPS",
+    "parent_id": 0
+  },
+  {
+    "category_id": "430",
+    "category_name": "VIP | F1 and MotoGP",
+    "parent_id": 0
+  }
+]
