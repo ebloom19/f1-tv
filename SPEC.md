@@ -23,7 +23,11 @@ Xtream Codes IPTV line. Development-only, own devices. Repo root is the RN proje
     free again within 0–5 s; after a continuous `.ts` socket is closed, within ~1 s;
   - after a *burst* (re-downloading segments at full bandwidth for 15 s+) the hold stretches to 25–60 s;
   - re-requests of the *same* stream never count as a second connection; the edge ignores `Range`.
-  The player therefore retries SLOT_BUSY for up to 30 s (`timing.slotRetryMax` × 1.5 s).
+  - **A rejected (401) request for stream B made while stream A is still live registers a phantom session**
+    that the panel clears only on its own timer (measured 76–322 s). The app must never do this: in
+    single-connection mode `WatchScreen` fully unmounts the old player (releasing its lease, stopping all
+    requests) *before* mounting the new one, so the slot is genuinely idle (frees in 0–5 s) at switch time.
+  The player retries SLOT_BUSY for up to 30 s (`timing.slotRetryMax` × 1.5 s), which covers the idle-switch case.
 - The panel returns **503 to curl's default User-Agent**; every player UA works. Always send an explicit
   `User-Agent` on API calls and on the video source headers. Use `Pitwall/1.0 (AppleTV; tvOS)` / `(AndroidTV)`.
 - F1 content: category 430 `VIP | F1 and MotoGP` (names prefixed `PPV| `) is the working set. Category 120
