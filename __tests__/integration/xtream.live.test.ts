@@ -147,12 +147,19 @@ live('Xtream live provider', () => {
       let stop = false;
       let downloaded = 0;
       const loader = (async () => {
-        // Throttled: a real player pulls ~1 segment per target duration; hammering the edge at full
-        // bandwidth makes the panel hold the session much longer afterwards.
+        // Paced exactly like AVPlayer/ExoPlayer: refresh the playlist and pull only the newest segment,
+        // once per target duration. Bursting the same segment at full bandwidth makes the panel hold
+        // the session for a minute or more afterwards; paced traffic frees it within seconds.
+        let lastSegment = '';
         while (!stop) {
-          const r = await fetch(world.firstSegmentUrl, { headers: client.streamHeaders() });
-          downloaded += (await r.arrayBuffer()).byteLength;
-          for (let i = 0; i < 6 && !stop; i++) {
+          const p = await client.probePlaylist(wf.streamId);
+          if (p.status === 'ok' && p.firstSegmentUrl !== lastSegment) {
+            lastSegment = p.firstSegmentUrl;
+            const r = await fetch(p.firstSegmentUrl, { headers: client.streamHeaders() });
+            downloaded += (await r.arrayBuffer()).byteLength;
+          }
+          const pace = p.status === 'ok' ? Math.max(4000, p.targetDuration * 1000) : 4000;
+          for (let waited = 0; waited < pace && !stop; waited += 500) {
             await sleep(500);
           }
         }
