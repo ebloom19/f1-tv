@@ -28,10 +28,11 @@
 	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<!-- Pitwall is a personal dev-only app; the Xtream panel and its edge hosts serve plain HTTP. -->
+		<!-- Pitwall is a personal dev-only app; the Xtream panel and its edge hosts serve plain HTTP.
+		     NOTE: NSAllowsArbitraryLoads must stand ALONE. Adding a granular key such as
+		     NSAllowsArbitraryLoadsForMedia makes iOS/tvOS 10+ ignore NSAllowsArbitraryLoads and grant
+		     only that narrow exception, which blocks the player_api data request (NSURLError -1022). -->
 		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-		<key>NSAllowsArbitraryLoadsForMedia</key>
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
