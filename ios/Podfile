@@ -35,35 +35,22 @@ target 'Pitwall' do
     # ("call to consteval function ... is not a constant expression"), which breaks the
     # fmt/Folly/React pods that RN 0.83 pins. RN builds these C++ dependencies through its
     # own prebuilt path that ignores per-target build settings, so a -D flag never reaches
-    # the compile. Patch fmt's header directly to force its runtime-checking path; this hook
-    # re-applies the edit on every `pod install`.
+    # the compile. In fmt 11.0.2 the FMT_USE_CONSTEVAL switch is set by an unguarded
+    # #if/#elif chain, so pre-defining it is overwritten a few lines later. Rewrite fmt's
+    # own "on" branch to 0 so the consteval path is disabled at the source. Idempotent; the
+    # hook re-applies on every `pod install`.
     require 'fileutils'
-    marker = '// pitwall-consteval-patch'
-    fmt_include = File.join(installer.sandbox.root, 'fmt', 'include', 'fmt')
-    %w[base.h core.h].each do |name|
-      path = File.join(fmt_include, name)
-      next unless File.exist?(path)
-      contents = File.read(path)
-      next unless contents.include?('FMT_USE_CONSTEVAL')
-      next if contents.start_with?(marker)
-      patched = "#{marker}\n#ifndef FMT_USE_CONSTEVAL\n#define FMT_USE_CONSTEVAL 0\n#endif\n#{contents}"
-      # fmt's headers are hardlinked read-only from the CocoaPods cache. Make the entry
-      # writable and unlink it first so we write a fresh copy without touching the cache.
-      FileUtils.chmod('u+w', path) rescue nil
-      File.delete(path) rescue nil
-      File.write(path, patched)
-      Pod::UI.puts "[Pitwall] Patched fmt/#{name}: forced FMT_USE_CONSTEVAL=0".green
-    end
-
-    # Belt-and-suspenders: fmt's prefix header is force-included (-include) into every fmt
-    # translation unit and is always writable, so defining the macro here guarantees it is
-    # set before any fmt header is parsed, regardless of which header holds the guard.
-    pch = File.join(installer.sandbox.root, 'Target Support Files', 'fmt', 'fmt-prefix.pch')
-    if File.exist?(pch)
-      pch_contents = File.read(pch)
-      unless pch_contents.include?(marker)
-        File.write(pch, "#{pch_contents}\n#{marker}\n#ifndef FMT_USE_CONSTEVAL\n#define FMT_USE_CONSTEVAL 0\n#endif\n")
-        Pod::UI.puts '[Pitwall] Patched fmt-prefix.pch: forced FMT_USE_CONSTEVAL=0'.green
+    fmt_base = File.join(installer.sandbox.root, 'fmt', 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      contents = File.read(fmt_base)
+      patched = contents.gsub(/(define\s+FMT_USE_CONSTEVAL\s+)1\b/, '\10')
+      if patched != contents
+        # fmt's headers are hardlinked read-only from the CocoaPods cache; unlink first so we
+        # write a fresh copy instead of mutating the shared cache.
+        FileUtils.chmod('u+w', fmt_base) rescue nil
+        File.delete(fmt_base) rescue nil
+        File.write(fmt_base, patched)
+        Pod::UI.puts '[Pitwall] Patched fmt/base.h: FMT_USE_CONSTEVAL forced to 0'.green
       end
     end
   end
