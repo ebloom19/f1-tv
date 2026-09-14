@@ -37,6 +37,12 @@ export interface F1Channel {
   categoryId: string;
   driver?: DriverRef;
   rank: number;
+  /**
+   * True when the feed is (heuristically) HEVC carried in an MPEG-TS segment. Apple's HLS does not
+   * support HEVC-in-TS, so AVPlayer on iOS/tvOS plays the audio over a black frame. Such feeds play
+   * fine on Android (ExoPlayer). Used to keep them out of the default pick and to warn on Apple.
+   */
+  appleVideoUnsupported?: boolean;
 }
 
 export interface DriverEntry extends DriverRef {

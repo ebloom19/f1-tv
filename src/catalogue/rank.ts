@@ -35,28 +35,48 @@ function sourcePenalty(source: SourceTag): number {
  *   → Sky Sports F1 FHD (3) > HEVC (4) > 50FPS (5) > HD (6) > SD (7) > UHD (8)
  *   → UK| mirrors (+10) → other languages (20+) → unrecognised (40+).
  */
+/**
+ * Heuristic: is this feed HEVC carried in MPEG-TS? Apple's HLS can't play that (black video, audio
+ * only), though Android can. Matches every stream probed on the real panel: the "UHD" feeds and the
+ * bare "F1-TV" world brand are HEVC; "Sky Sports F1", "F1-INTERNATIONAL" and "F1TV PRO" are H.264.
+ */
+export function likelyHevcInTs(ch: F1Channel): boolean {
+  const name = ch.rawName.toUpperCase();
+  if (/\bUHD\b/.test(name) || ch.quality === 'UHD') {
+    return true;
+  }
+  if (ch.kind === 'world' && /F1[\s-]*TV/.test(name) && !/PRO|INTERNATIONAL|DATA|TRACKER/.test(name)) {
+    return true;
+  }
+  return false;
+}
+
+/** Feeds Apple can't play are pushed to the back of their group so the default pick is playable. */
+const APPLE_UNSUPPORTED_PENALTY = 100;
+
 export function rankChannel(ch: F1Channel): number {
   const name = ch.rawName.toUpperCase();
+  const applePenalty = likelyHevcInTs(ch) ? APPLE_UNSUPPORTED_PENALTY : 0;
   switch (ch.kind) {
     case 'world': {
       if (ch.source === 'SKY') {
-        return 3 + SKY_QUALITY_RANK[ch.quality];
+        return 3 + SKY_QUALITY_RANK[ch.quality] + applePenalty;
       }
       const penalty = sourcePenalty(ch.source);
       if (/INTERNATIONAL/.test(name)) {
         const lang = ch.language;
         if (lang === 'EN') {
-          return 2 + penalty;
+          return 2 + penalty + applePenalty;
         }
-        return 20 + (lang ? LANGUAGE_RANK[lang] : 5) + penalty;
+        return 20 + (lang ? LANGUAGE_RANK[lang] : 5) + penalty + applePenalty;
       }
       if (/FORMULA\s*1/.test(name)) {
-        return 1 + penalty;
+        return 1 + penalty + applePenalty;
       }
       if (/F1[\s-]*TV/.test(name)) {
-        return 0 + penalty;
+        return 0 + penalty + applePenalty;
       }
-      return 40 + penalty;
+      return 40 + penalty + applePenalty;
     }
     case 'onboard':
       return sourcePenalty(ch.source);

@@ -31,7 +31,7 @@ describe('SessionHubScreen', () => {
     const { loadCatalogue, onSettings } = renderHub(1);
     expect(screen.getByTestId('hub-account').props.children).toBe('Test line · 1 connection · expires 2027-07-08');
     expect(screen.getByTestId('hub-watch')).toBeTruthy();
-    expect(screen.getAllByText('F1 TV').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/F1 International/).length).toBeGreaterThan(0);
 
     const chips = screen.getAllByTestId(/^hub-driver-/);
     expect(chips).toHaveLength(20);
@@ -59,17 +59,17 @@ describe('SessionHubScreen', () => {
   it('budget 2: a driver chip docks the driver next to the default world feed', () => {
     const { onWatch } = renderHub(2);
     fireEvent.press(screen.getByTestId('hub-driver-NOR'));
-    expect(onWatch).toHaveBeenCalledWith({ main: 'world:6862', docked: ['driver:NOR'] });
+    expect(onWatch).toHaveBeenCalledWith({ main: 'world:7929', docked: ['driver:NOR'] });
 
     fireEvent.press(screen.getByTestId('hub-watch'));
-    expect(onWatch).toHaveBeenLastCalledWith({ main: 'world:6862' });
+    expect(onWatch).toHaveBeenLastCalledWith({ main: 'world:7929' });
 
     fireEvent.press(screen.getByTestId('hub-world-1223445'));
     expect(onWatch).toHaveBeenLastCalledWith({ main: 'world:1223445' });
 
     const dataId = catalogue.data[0].streamId;
     fireEvent.press(screen.getByTestId(`hub-data-${dataId}`));
-    expect(onWatch).toHaveBeenLastCalledWith({ main: 'world:6862', docked: [`data:${dataId}`] });
+    expect(onWatch).toHaveBeenLastCalledWith({ main: 'world:7929', docked: [`data:${dataId}`] });
   });
 
   it('loads the catalogue on mount when none is cached, with loading and error states', async () => {
@@ -96,7 +96,7 @@ describe('SessionHubScreen', () => {
     );
     expect(accountLine([], 0)).toBe('No line · 0 connections · expires never');
     expect(selectionFor(catalogue, 1, 'driver:VER')).toEqual({ main: 'driver:VER' });
-    expect(selectionFor(catalogue, 3, 'driver:VER')).toEqual({ main: 'world:6862', docked: ['driver:VER'] });
+    expect(selectionFor(catalogue, 3, 'driver:VER')).toEqual({ main: 'world:7929', docked: ['driver:VER'] });
     expect(selectionFor({ ...catalogue, defaultWorldFeed: null }, 3, 'driver:VER')).toEqual({ main: 'driver:VER' });
   });
 });

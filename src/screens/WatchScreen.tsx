@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   BackHandler,
+  Platform,
   StyleSheet,
   Text,
   TVEventControl,
@@ -249,8 +250,12 @@ export function WatchScreen({ pool, catalogue, initialMain, initialDocked, onExi
           return;
         case 'select':
         case 'longSelect':
+          // Center/select button: raise the rail when it's hidden; while it's open, keep it alive
+          // (the focused chip/tile handles its own press via Pressable).
           if (stateRef.current.railOpen) {
             armHide();
+          } else {
+            openRail();
           }
           return;
         default:
@@ -343,6 +348,15 @@ export function WatchScreen({ pool, catalogue, initialMain, initialDocked, onExi
         {state.pendingSwitch ? (
           <View style={styles.switchOverlay} pointerEvents="none" testID="switch-overlay">
             <Text style={styles.switchText}>{`Switching to ${pendingSrc?.abbr ?? state.pendingSwitch}…`}</Text>
+          </View>
+        ) : null}
+        {!state.pendingSwitch && Platform.OS === 'ios' && main.src?.channel.appleVideoUnsupported ? (
+          <View style={styles.hevcOverlay} pointerEvents="none" testID="hevc-overlay">
+            <Text style={styles.hevcTitle}>Audio only on Apple TV</Text>
+            <Text style={styles.hevcText}>
+              This feed is HEVC in a transport stream, which Apple can’t play. Open the rail and pick a
+              Sky Sports F1 or International feed.
+            </Text>
           </View>
         ) : null}
         {state.railOpen && main.src ? (
@@ -526,6 +540,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
+  },
+  hevcOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+    backgroundColor: colors.overlay,
+  },
+  hevcTitle: {
+    color: colors.ink,
+    fontSize: font.size.lg,
+    fontWeight: font.titleWeight,
+    marginBottom: spacing.sm,
+  },
+  hevcText: {
+    color: colors.ink2,
+    fontSize: font.size.sm,
+    textAlign: 'center',
+    maxWidth: 640,
   },
   mainHeader: {
     position: 'absolute',

@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+  html,body{margin:0;padding:0}
+  .icon{width:100vw;height:100vh;position:relative;overflow:hidden;
+    background:radial-gradient(120% 140% at 18% 12%, #1b2230 0%, #0b0e14 55%, #06080c 100%);
+    display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",Arial,sans-serif}
+  /* checkered flag block, left */
+  .flag{position:absolute;left:0;top:0;bottom:0;width:22%;
+    background-image:
+      linear-gradient(45deg,#e8eaf0 25%,transparent 25%,transparent 75%,#e8eaf0 75%),
+      linear-gradient(45deg,#e8eaf0 25%,transparent 25%,transparent 75%,#e8eaf0 75%);
+    background-color:#0b0e14;background-size:16% 26.7%;background-position:0 0,8% 13.3%;opacity:.9;
+    transform:skewX(-9deg) translateX(-14%);}
+  .grad{position:absolute;left:14%;top:0;bottom:0;width:16%;transform:skewX(-9deg);
+    background:linear-gradient(90deg,rgba(6,8,12,0),#06080c);}
+  /* red speed streak */
+  .streak{position:absolute;right:-6%;top:50%;height:9%;width:82%;transform:translateY(-50%) skewX(-9deg);
+    background:linear-gradient(90deg,rgba(212,0,0,0),#d40000 45%,#ff2d2d);border-radius:6px;opacity:.95;filter:drop-shadow(0 0 12px rgba(212,0,0,.5))}
+  .wordmark{position:relative;z-index:2;text-align:center;margin-left:8%}
+  .word{font-weight:900;letter-spacing:-.02em;color:#f2f4f8;line-height:.92;
+    font-size:20vh;text-transform:uppercase;text-shadow:0 4px 18px rgba(0,0,0,.6)}
+  .word .pit{color:#fff}.word .wall{color:#ff2d2d}
+  .sub{margin-top:2vh;font-weight:700;letter-spacing:.5em;color:#aeb5c4;font-size:5.2vh;text-transform:uppercase;padding-left:.5em}
+</style></head><body>
+<div class="icon">
+  <div class="flag"></div><div class="grad"></div>
+  <div class="streak"></div>
+  <div class="wordmark">
+    <div class="word"><span class="pit">PIT</span><span class="wall">WALL</span></div>
+    <div class="sub">F1 Multiview</div>
+  </div>
+</div></body></html>

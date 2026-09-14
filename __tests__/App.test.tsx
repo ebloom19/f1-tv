@@ -61,7 +61,7 @@ describe('App', () => {
     fireEvent.press(screen.getByTestId('hub-driver-VER'));
 
     await waitFor(() => expect(screen.getByTestId('watch-screen')).toBeTruthy());
-    expect(screen.getByTestId('video-world:6862')).toBeTruthy();
+    expect(screen.getByTestId('video-world:7929')).toBeTruthy();
     expect(screen.getByTestId('tile-driver:VER')).toBeTruthy();
     expect(screen.getByTestId('video-driver:VER')).toBeTruthy();
 

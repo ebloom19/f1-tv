@@ -1,7 +1,7 @@
 import type { XtreamLiveCategory, XtreamLiveStream } from '../provider/xtream/types.ts';
 import type { DriverEntry, F1Catalogue, F1Channel } from './types.ts';
 import { classifyStream } from './classify.ts';
-import { byRankThenId, rankChannel } from './rank.ts';
+import { byRankThenId, likelyHevcInTs, rankChannel } from './rank.ts';
 import { teamOrderIndex } from './teams.ts';
 
 /**
@@ -22,6 +22,7 @@ export function buildCatalogue(streams: XtreamLiveStream[], _categories: XtreamL
     }
     seen.add(stream.stream_id);
     ch.rank = rankChannel(ch);
+    ch.appleVideoUnsupported = likelyHevcInTs(ch);
     channels.push(ch);
   }
 

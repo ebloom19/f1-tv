@@ -64,26 +64,32 @@ describe('buildCatalogue (real provider fixture)', () => {
     }
   });
 
-  test('default world feed is PPV| F1-TV (6862)', () => {
-    expect(cat.defaultWorldFeed?.streamId).toBe(6862);
-    expect(cat.defaultWorldFeed?.rank).toBe(0);
-    expect(cat.worldFeeds[0].streamId).toBe(6862);
+  test('default world feed is an Apple-playable H.264 feed (F1-INTERNATIONAL UK 7929)', () => {
+    // HEVC-in-TS feeds (F1-TV, UHD) are demoted so the default renders on Apple TV, not just Android.
+    expect(cat.defaultWorldFeed?.streamId).toBe(7929);
+    expect(cat.defaultWorldFeed?.rank).toBe(2);
+    expect(cat.worldFeeds[0].streamId).toBe(7929);
+    expect(cat.defaultWorldFeed?.appleVideoUnsupported).toBeFalsy();
   });
 
-  test('world feed ranking: F1-TV → FORMULA 1 UHD → INTERNATIONAL UK → Sky FHD > HEVC > 50FPS > HD > SD > UHD → other languages', () => {
+  test('world feed ranking prefers Apple-playable H.264 feeds; HEVC-in-TS feeds sink to the back', () => {
     const order = cat.worldFeeds.map(c => c.streamId);
     const pos = (id: number): number => order.indexOf(id);
-    expect(pos(6862)).toBe(0);
-    expect(pos(1223445)).toBe(1);
-    expect(pos(7929)).toBe(2);
-    expect(pos(34209)).toBe(3);
+    const flagged = (id: number) => cat.worldFeeds.find(c => c.streamId === id)?.appleVideoUnsupported;
+    // H.264 feeds first, English international ahead of the Sky quality ladder.
+    expect(pos(7929)).toBe(0);
     expect(pos(34209)).toBeLessThan(pos(102172));
     expect(pos(102172)).toBeLessThan(pos(1084875));
     expect(pos(1084875)).toBeLessThan(pos(29024));
     expect(pos(29024)).toBeLessThan(pos(29025));
-    expect(pos(29025)).toBeLessThan(pos(1222387));
-    for (const id of [7930, 7931, 7932]) {
-      expect(pos(id)).toBeGreaterThan(pos(1222387));
+    // HEVC-in-TS feeds are flagged and ranked behind every H.264 feed.
+    for (const hevc of [6862, 1223445, 1222387]) {
+      expect(flagged(hevc)).toBe(true);
+      expect(pos(hevc)).toBeGreaterThan(pos(29025));
+    }
+    // H.264 feeds are not flagged.
+    for (const h264 of [7929, 34209, 102172, 1084875, 29024, 29025]) {
+      expect(flagged(h264)).toBeFalsy();
     }
   });
 

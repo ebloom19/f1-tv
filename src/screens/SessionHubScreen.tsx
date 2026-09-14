@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
 import type { DriverEntry, F1Catalogue, F1Channel } from '../catalogue/types';
 import { makeSourceId } from '../multiview/types';
 import type { SourceId } from '../multiview/types';
@@ -34,6 +34,11 @@ export function accountLine(accounts: XtreamAccount[], budget: number): string {
 }
 
 /** What to watch when the user picks a driver (or data screen) from the hub. */
+/** On Apple, HEVC-in-TS feeds are audio-only; flag them in the label so the user can avoid them. */
+function feedLabel(ch: F1Channel): string {
+  return Platform.OS === 'ios' && ch.appleVideoUnsupported ? `${ch.label} · audio only` : ch.label;
+}
+
 export function selectionFor(catalogue: F1Catalogue, budget: number, id: SourceId): WatchSelection {
   const world = catalogue.defaultWorldFeed ? makeSourceId('world', catalogue.defaultWorldFeed.streamId) : null;
   if (budget <= 1 || !world) {
@@ -158,7 +163,7 @@ export function SessionHubScreen({
           <TVFocusGuideView autoFocus style={styles.hero}>
             <View style={styles.heroText}>
               <Text style={styles.heroKicker}>WORLD FEED</Text>
-              <Text style={styles.heroTitle}>{defaultWorld ? defaultWorld.label : 'No world feed found'}</Text>
+              <Text style={styles.heroTitle}>{defaultWorld ? feedLabel(defaultWorld) : 'No world feed found'}</Text>
               <Text style={styles.heroHint}>
                 {budget <= 1
                   ? 'Single connection: pick any feed, Select switches between them.'
@@ -182,7 +187,7 @@ export function SessionHubScreen({
                 {altWorlds.map(ch => (
                   <FocusButton
                     key={ch.streamId}
-                    title={ch.label}
+                    title={feedLabel(ch)}
                     onPress={() => watchWorld(ch)}
                     style={styles.rowButton}
                     testID={`hub-world-${ch.streamId}`}
