@@ -37,6 +37,7 @@ target 'Pitwall' do
     # own prebuilt path that ignores per-target build settings, so a -D flag never reaches
     # the compile. Patch fmt's header directly to force its runtime-checking path; this hook
     # re-applies the edit on every `pod install`.
+    require 'fileutils'
     marker = '// pitwall-consteval-patch'
     fmt_include = File.join(installer.sandbox.root, 'fmt', 'include', 'fmt')
     %w[base.h core.h].each do |name|
@@ -45,7 +46,12 @@ target 'Pitwall' do
       contents = File.read(path)
       next unless contents.include?('FMT_USE_CONSTEVAL')
       next if contents.start_with?(marker)
-      File.write(path, "#{marker}\n#ifndef FMT_USE_CONSTEVAL\n#define FMT_USE_CONSTEVAL 0\n#endif\n#{contents}")
+      patched = "#{marker}\n#ifndef FMT_USE_CONSTEVAL\n#define FMT_USE_CONSTEVAL 0\n#endif\n#{contents}"
+      # fmt's headers are hardlinked read-only from the CocoaPods cache. Make the entry
+      # writable and unlink it first so we write a fresh copy without touching the cache.
+      FileUtils.chmod('u+w', path) rescue nil
+      File.delete(path) rescue nil
+      File.write(path, patched)
       Pod::UI.puts "[Pitwall] Patched fmt/#{name}: forced FMT_USE_CONSTEVAL=0".green
     end
   end
