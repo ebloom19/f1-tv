@@ -33,14 +33,20 @@ target 'Pitwall' do
 
     # Xcode 16/26's Clang rejects fmt's consteval compile-time format-string checks
     # ("call to consteval function ... is not a constant expression"), which breaks the
-    # fmt/Folly/React pods that RN 0.83 pins. Force fmt onto its runtime-checking path.
+    # fmt/Folly/React pods that RN 0.83 pins. Force fmt onto its runtime-checking path by
+    # passing the flag straight to clang (OTHER_CPLUSPLUSFLAGS avoids the xcconfig-merge
+    # ambiguity that makes GCC_PREPROCESSOR_DEFINITIONS unreliable here).
+    patched = 0
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
-        defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || ['$(inherited)']
-        defs = [defs] unless defs.is_a?(Array)
-        defs << 'FMT_USE_CONSTEVAL=0' unless defs.include?('FMT_USE_CONSTEVAL=0')
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs
+        flags = config.build_settings['OTHER_CPLUSPLUSFLAGS'] || ['$(inherited)']
+        flags = flags.split(' ') if flags.is_a?(String)
+        next if flags.include?('-DFMT_USE_CONSTEVAL=0')
+        flags << '-DFMT_USE_CONSTEVAL=0'
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = flags
+        patched += 1
       end
     end
+    Pod::UI.puts "[Pitwall] Disabled fmt consteval on #{patched} target configs (FMT_USE_CONSTEVAL=0)".green
   end
 end
