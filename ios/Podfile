@@ -33,20 +33,20 @@ target 'Pitwall' do
 
     # Xcode 16/26's Clang rejects fmt's consteval compile-time format-string checks
     # ("call to consteval function ... is not a constant expression"), which breaks the
-    # fmt/Folly/React pods that RN 0.83 pins. Force fmt onto its runtime-checking path by
-    # passing the flag straight to clang (OTHER_CPLUSPLUSFLAGS avoids the xcconfig-merge
-    # ambiguity that makes GCC_PREPROCESSOR_DEFINITIONS unreliable here).
-    patched = 0
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        flags = config.build_settings['OTHER_CPLUSPLUSFLAGS'] || ['$(inherited)']
-        flags = flags.split(' ') if flags.is_a?(String)
-        next if flags.include?('-DFMT_USE_CONSTEVAL=0')
-        flags << '-DFMT_USE_CONSTEVAL=0'
-        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = flags
-        patched += 1
-      end
+    # fmt/Folly/React pods that RN 0.83 pins. RN builds these C++ dependencies through its
+    # own prebuilt path that ignores per-target build settings, so a -D flag never reaches
+    # the compile. Patch fmt's header directly to force its runtime-checking path; this hook
+    # re-applies the edit on every `pod install`.
+    marker = '// pitwall-consteval-patch'
+    fmt_include = File.join(installer.sandbox.root, 'fmt', 'include', 'fmt')
+    %w[base.h core.h].each do |name|
+      path = File.join(fmt_include, name)
+      next unless File.exist?(path)
+      contents = File.read(path)
+      next unless contents.include?('FMT_USE_CONSTEVAL')
+      next if contents.start_with?(marker)
+      File.write(path, "#{marker}\n#ifndef FMT_USE_CONSTEVAL\n#define FMT_USE_CONSTEVAL 0\n#endif\n#{contents}")
+      Pod::UI.puts "[Pitwall] Patched fmt/#{name}: forced FMT_USE_CONSTEVAL=0".green
     end
-    Pod::UI.puts "[Pitwall] Disabled fmt consteval on #{patched} target configs (FMT_USE_CONSTEVAL=0)".green
   end
 end
