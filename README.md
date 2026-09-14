@@ -26,14 +26,21 @@ See `SPEC.md` for the provider findings and module interfaces.
 
 ```bash
 npm install --legacy-peer-deps
-export XTREAM_DNS1=http://your-panel-host      # or https://host:port
-export XTREAM_USERNAME=...
-export XTREAM_PASSWORD=...
+# Put your Xtream line in a git-ignored .env at the repo root:
+cat > .env <<'ENV'
+XTREAM_DNS1=http://your-panel-host      # or https://host:port
+XTREAM_USERNAME=your-username
+XTREAM_PASSWORD=your-password
+M3U=http://your-panel-host/get.php?username=...&password=...&type=m3u_plus&output=mpegts
+ENV
 npm run gen-env                                # writes src/config/env.generated.ts (git-ignored)
 ```
 
-`gen-env` also runs before `npm start` and `npm test`. If you skip it, the app opens on the
-Connect screen where you can type the line in.
+`gen-env` reads the root `.env` (and `.env.local`); real shell environment variables of the
+same names take precedence. It runs automatically before `npm start` and `npm test`. If no
+credentials are found, the app opens on the Connect screen where you can type the line in.
+After editing `.env`, re-run `npm run gen-env` and reload the app (press R in the simulator, or
+restart Metro with `npm start --reset-cache`) so the new bundle picks it up.
 
 ## Run on Apple TV
 

@@ -11,16 +11,55 @@
 const fs = require('fs');
 const path = require('path');
 
-const OUT = path.join(__dirname, '..', 'src', 'config', 'env.generated.ts');
+const ROOT = path.join(__dirname, '..');
+const OUT = path.join(ROOT, 'src', 'config', 'env.generated.ts');
 const REL = path.relative(process.cwd(), OUT) || OUT;
 
-const vars = {
-  baseUrl: process.env.XTREAM_DNS1,
-  username: process.env.XTREAM_USERNAME,
-  password: process.env.XTREAM_PASSWORD,
-  m3u: process.env.M3U,
+// Minimal .env loader (Node does not read .env on its own, and we avoid adding a dependency).
+function loadDotEnv(file) {
+  const out = {};
+  if (!fs.existsSync(file)) {
+    return out;
+  }
+  for (const raw of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) {
+      continue;
+    }
+    const eq = line.indexOf('=');
+    if (eq === -1) {
+      continue;
+    }
+    let key = line.slice(0, eq).trim();
+    if (key.startsWith('export ')) {
+      key = key.slice('export '.length).trim();
+    }
+    let value = line.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
+// Real environment variables win; .env / .env.local fill in the rest.
+const dotenv = {
+  ...loadDotEnv(path.join(ROOT, '.env')),
+  ...loadDotEnv(path.join(ROOT, '.env.local')),
 };
-const label = process.env.XTREAM_LABEL || 'My line';
+const pick = k => (process.env[k] != null && process.env[k] !== '' ? process.env[k] : dotenv[k]);
+
+const vars = {
+  baseUrl: pick('XTREAM_DNS1'),
+  username: pick('XTREAM_USERNAME'),
+  password: pick('XTREAM_PASSWORD'),
+  m3u: pick('M3U'),
+};
+const label = pick('XTREAM_LABEL') || 'My line';
 
 const anySet = Object.values(vars).some(v => typeof v === 'string' && v.length > 0);
 
