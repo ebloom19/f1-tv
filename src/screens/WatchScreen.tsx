@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   BackHandler,
+  Pressable,
   StyleSheet,
   Text,
   TVEventControl,
@@ -326,8 +327,16 @@ export function WatchScreen({ pool, catalogue, initialMain, initialDocked, onExi
 
   return (
     <View style={styles.root} testID="watch-screen">
-      {/* Main picture */}
-      <View style={[styles.mainSlot, abs(layout.main)]} testID="main-slot">
+      {/* Main picture. Focusable while the rail is hidden so the remote's Select always has a target:
+          tvOS only routes presses to a focused view, and with the rail closed nothing else is focusable. */}
+      <Pressable
+        style={[styles.mainSlot, abs(layout.main)]}
+        testID="main-slot"
+        focusable={!state.railOpen}
+        isTVSelectable={!state.railOpen}
+        hasTVPreferredFocus={!state.railOpen}
+        onPress={openRail}
+      >
         <Player
           channel={main.src?.channel}
           uri={main.uri}
@@ -373,7 +382,7 @@ export function WatchScreen({ pool, catalogue, initialMain, initialDocked, onExi
             ) : null}
           </View>
         ) : null}
-      </View>
+      </Pressable>
 
       {/* Tile column (tiles, empty slots, gutter slots) */}
       {column ? (

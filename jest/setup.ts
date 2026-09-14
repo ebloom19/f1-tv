@@ -84,6 +84,17 @@ jest.mock('react-native-video', () => {
 // react-native-vlc-media-player: same shape as the Video mock. Renders a View (testID passthrough,
 // accessibilityLabel "vlc-player" so tests can tell the players apart), fires onPlaying on mount, or
 // onError when the uri contains "simulate-401" / "simulate-fatal".
+// The VLC native view is "present" in tests unless a test sets globalThis.__vlcNativeAvailable = false.
+declare global {
+  var __vlcNativeAvailable: boolean | undefined;
+}
+{
+  const { UIManager } = require('react-native');
+  const prev = UIManager.hasViewManagerConfig;
+  UIManager.hasViewManagerConfig = (name: string) =>
+    name === 'RCTVLCPlayer' ? globalThis.__vlcNativeAvailable !== false : typeof prev === 'function' ? prev(name) : false;
+}
+
 jest.mock('react-native-vlc-media-player', () => {
   const React = require('react');
   const { View } = require('react-native');

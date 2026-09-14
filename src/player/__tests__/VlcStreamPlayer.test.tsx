@@ -63,6 +63,25 @@ describe('VlcStreamPlayer', () => {
     expect(screen.getByTestId('v-fatal')).toBeTruthy();
   });
 
+  it('explains itself instead of a silent black frame when the native module is missing', () => {
+    const onFatal = jest.fn();
+    render(
+      <VlcStreamPlayer uri="http://x/ok.m3u8" headers={headers} muted={false} lease={lease} nativeAvailable={false}
+        onPlaying={jest.fn()} onSlotBusy={jest.fn()} onFatal={onFatal} testID="v" />,
+    );
+    expect(screen.getByTestId('v-no-native')).toBeTruthy();
+    expect(screen.queryByTestId('v')).toBeNull();
+    expect(onFatal).toHaveBeenCalledWith(expect.stringMatching(/native module/));
+  });
+
+  it('shows a VLC badge so the active player is visible', () => {
+    render(
+      <VlcStreamPlayer uri="http://x/ok.m3u8" headers={headers} muted={false} lease={lease}
+        onPlaying={jest.fn()} onSlotBusy={jest.fn()} onFatal={jest.fn()} testID="v" />,
+    );
+    expect(screen.getByTestId('v-vlc-badge')).toBeTruthy();
+  });
+
   it('shows the no-connection fallback when there is no lease', () => {
     render(
       <VlcStreamPlayer uri="http://x/ok.m3u8" headers={headers} muted={false} lease={null}

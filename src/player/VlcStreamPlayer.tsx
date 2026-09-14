@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, UIManager, View } from 'react-native';
 import type { ComponentType } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
@@ -20,6 +20,26 @@ interface VlcNativeProps {
 }
 // Runtime shape is `module.exports = { VLCPlayer, VlCPlayerView }` (no default export).
 const { VLCPlayer } = require('react-native-vlc-media-player') as { VLCPlayer: ComponentType<VlcNativeProps> };
+
+/**
+ * Is the VLC native view actually in this binary? Adding the pod needs `pod install` and a native
+ * rebuild; a JS-only reload leaves `RCTVLCPlayer` unregistered, which would otherwise render as a
+ * silent black frame. Under the New Architecture the legacy view manager is exposed through the
+ * interop layer, which `hasViewManagerConfig` still reports.
+ */
+export function isVlcNativeAvailable(): boolean {
+  const um = UIManager as unknown as {
+    hasViewManagerConfig?: (name: string) => boolean;
+    getViewManagerConfig?: (name: string) => unknown;
+  };
+  if (typeof um.hasViewManagerConfig === 'function') {
+    return um.hasViewManagerConfig('RCTVLCPlayer');
+  }
+  if (typeof um.getViewManagerConfig === 'function') {
+    return um.getViewManagerConfig('RCTVLCPlayer') != null;
+  }
+  return true;
+}
 import type { StreamPlayerProps } from './StreamPlayer';
 import { colors, font, spacing, timing } from '../ui/theme';
 
@@ -31,6 +51,8 @@ export interface VlcStreamPlayerProps extends StreamPlayerProps {
    * busy provider slot (401/403 → retry) from a real playback error. Injectable for tests.
    */
   classify?: (uri: string, headers: Record<string, string>) => Promise<ErrorClass>;
+  /** Override the native-availability check (tests). */
+  nativeAvailable?: boolean;
 }
 
 export const VLC_SLOT_BUSY_MAX_ATTEMPTS: number = timing.slotRetryMax;
@@ -69,7 +91,9 @@ export function VlcStreamPlayer({
   onFatal,
   testID,
   classify = classifyByPlaylist,
+  nativeAvailable,
 }: VlcStreamPlayerProps) {
+  const available = nativeAvailable ?? isVlcNativeAvailable();
   const [attempt, setAttempt] = useState(0);
   const [generation, setGeneration] = useState(0);
   const [retrying, setRetrying] = useState(false);
@@ -104,7 +128,16 @@ export function VlcStreamPlayer({
     };
   }, []);
 
+  useEffect(() => {
+    if (!available) {
+      callbacks.current.onFatal('VLC native module is not in this build');
+    }
+  }, [available]);
+
+  const [started, setStarted] = useState(false);
+
   const handlePlaying = useCallback(() => {
+    setStarted(true);
     attemptRef.current = 0;
     setAttempt(0);
     setRetrying(false);
@@ -149,7 +182,7 @@ export function VlcStreamPlayer({
     });
   }, [headers, scheduleRetry]);
 
-  const hasSource = uri.length > 0 && lease !== null;
+  const hasSource = uri.length > 0 && lease !== null && available;
 
   return (
     <View style={styles.root} testID={testID ? `${testID}-frame` : undefined}>
@@ -174,6 +207,19 @@ export function VlcStreamPlayer({
           <Text style={styles.fallbackText}>{lease === null && uri ? 'No free connection' : 'No stream'}</Text>
         </View>
       )}
+      {!available ? (
+        <View style={styles.overlay} pointerEvents="none" testID={testID ? `${testID}-no-native` : undefined}>
+          <Text style={styles.overlayTitle}>VLC isn’t in this build</Text>
+          <Text style={styles.overlayText}>
+            Run `cd ios && pod install`, then rebuild from Xcode. A JS reload alone does not add the VLC native module.
+          </Text>
+        </View>
+      ) : null}
+      {available && hasSource ? (
+        <View style={styles.badge} pointerEvents="none" testID={testID ? `${testID}-vlc-badge` : undefined}>
+          <Text style={styles.badgeText}>{started ? 'VLC' : 'VLC · loading'}</Text>
+        </View>
+      ) : null}
       {retrying ? (
         <View style={styles.overlay} pointerEvents="none" testID={testID ? `${testID}-waiting` : undefined}>
           <Text style={styles.overlayTitle}>Switching…</Text>
@@ -213,6 +259,16 @@ const styles = StyleSheet.create({
   },
   overlayTitle: { color: colors.ink, fontSize: font.size.lg, fontWeight: font.titleWeight, marginBottom: spacing.sm },
   overlayText: { color: colors.ink2, fontSize: font.size.sm, fontWeight: font.bodyWeight, textAlign: 'center' },
+  badge: {
+    position: 'absolute',
+    right: spacing.sm,
+    bottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    backgroundColor: colors.scrim,
+    borderRadius: 4,
+  },
+  badgeText: { color: colors.ink3, fontSize: 11, fontWeight: font.titleWeight, letterSpacing: 1 },
 });
 
 export default VlcStreamPlayer;

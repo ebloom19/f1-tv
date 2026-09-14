@@ -290,3 +290,21 @@ describe('WatchScreen', () => {
     });
   });
 });
+
+describe('WatchScreen › Select on the picture', () => {
+  it('pressing the main picture opens the rail when it is hidden', () => {
+    renderWatch(1);
+    // rail starts open; close it via Menu, then Select on the picture brings it back
+    tv('menu');
+    expect(screen.queryByTestId('rail')).toBeNull();
+    fireEvent.press(screen.getByTestId('main-slot'));
+    expect(screen.getByTestId('rail')).toBeTruthy();
+  });
+
+  it('the picture is only focusable while the rail is hidden, so it never steals focus from chips', () => {
+    renderWatch(1);
+    expect(screen.getByTestId('main-slot').props.focusable).toBe(false);
+    tv('menu');
+    expect(screen.getByTestId('main-slot').props.focusable).toBe(true);
+  });
+});
