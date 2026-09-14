@@ -54,5 +54,17 @@ target 'Pitwall' do
       File.write(path, patched)
       Pod::UI.puts "[Pitwall] Patched fmt/#{name}: forced FMT_USE_CONSTEVAL=0".green
     end
+
+    # Belt-and-suspenders: fmt's prefix header is force-included (-include) into every fmt
+    # translation unit and is always writable, so defining the macro here guarantees it is
+    # set before any fmt header is parsed, regardless of which header holds the guard.
+    pch = File.join(installer.sandbox.root, 'Target Support Files', 'fmt', 'fmt-prefix.pch')
+    if File.exist?(pch)
+      pch_contents = File.read(pch)
+      unless pch_contents.include?(marker)
+        File.write(pch, "#{pch_contents}\n#{marker}\n#ifndef FMT_USE_CONSTEVAL\n#define FMT_USE_CONSTEVAL 0\n#endif\n")
+        Pod::UI.puts '[Pitwall] Patched fmt-prefix.pch: forced FMT_USE_CONSTEVAL=0'.green
+      end
+    end
   end
 end
