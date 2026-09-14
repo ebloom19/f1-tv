@@ -62,6 +62,8 @@ export const timing = {
   toastMs: 2500,
   slotRetryMs: 1500,
   slotRetryMax: 20, // 20 × 1.5 s = 30 s; the panel frees a slot 0–5 s after a paced player stops, up to ~25 s after a burst
+  vlcStartTimeoutMs: 15000, // VLC must report Playing within this, else the player is remounted (HLS ⇄ TS)
+  vlcStartRetryMax: 3, // remounts before giving up with the last VLC state on screen
 } as const;
 
 export type Colors = typeof colors;

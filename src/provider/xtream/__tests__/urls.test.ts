@@ -1,4 +1,11 @@
-import { buildPlayerApiUrl, buildStreamUrl, normalizeBaseUrl, originOf, parseM3uPlusLine } from '../urls.ts';
+import {
+  buildPlayerApiUrl,
+  buildStreamUrl,
+  normalizeBaseUrl,
+  originOf,
+  parseM3uPlusLine,
+  withStreamFormat,
+} from '../urls.ts';
 
 const creds = { baseUrl: 'panel.example.com', username: 'us er', password: 'p&ss' };
 
@@ -65,5 +72,17 @@ describe('parseM3uPlusLine', () => {
   });
   test('non-xtream url has no stream id', () => {
     expect(parseM3uPlusLine('#EXTINF:10,Foo', 'http://x/y.ts').streamId).toBeNull();
+  });
+});
+
+describe('withStreamFormat', () => {
+  it('swaps m3u8 and ts on the Xtream live shape, keeping the query', () => {
+    expect(withStreamFormat('http://h/live/u/p/123.m3u8', 'ts')).toBe('http://h/live/u/p/123.ts');
+    expect(withStreamFormat('http://h:8080/live/u/p/123.ts?x=1', 'm3u8')).toBe('http://h:8080/live/u/p/123.m3u8?x=1');
+    expect(withStreamFormat('http://h/live/u/p/123.m3u8', 'm3u8')).toBe('http://h/live/u/p/123.m3u8');
+  });
+  it('leaves other URLs alone', () => {
+    expect(withStreamFormat('http://edge/hlsr/tok/u/p/123/abc/123_0.ts', 'm3u8')).toBe('http://edge/hlsr/tok/u/p/123/abc/123_0.ts');
+    expect(withStreamFormat('', 'ts')).toBe('');
   });
 });

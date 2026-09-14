@@ -1,0 +1,32 @@
+diff --git a/node_modules/react-native-vlc-media-player/ios/RCTVLCPlayer/RCTVLCPlayer.m b/node_modules/react-native-vlc-media-player/ios/RCTVLCPlayer/RCTVLCPlayer.m
+index 54e29ee..c7d3f8d 100755
+--- a/node_modules/react-native-vlc-media-player/ios/RCTVLCPlayer/RCTVLCPlayer.m
++++ b/node_modules/react-native-vlc-media-player/ios/RCTVLCPlayer/RCTVLCPlayer.m
+@@ -16,7 +16,9 @@ static NSString *const readyForDisplayKeyPath = @"readyForDisplay";
+ static NSString *const playbackRate = @"rate";
+ 
+ 
+-#if !defined(DEBUG) || !(TARGET_IPHONE_SIMULATOR)
++// Pitwall patch: keep the player's state logs in Debug builds on real devices too (the original
++// muted NSLog everywhere except the simulator, which made a black frame on an Apple TV undiagnosable).
++#if !defined(DEBUG)
+     #define NSLog(...)
+ #endif
+ 
+@@ -237,7 +239,15 @@ static NSString *const playbackRate = @"rate";
+                 break;
+             case VLCMediaPlayerStateError:
+                 NSLog(@"VLCMediaPlayerStateError %i", _player.numberOfAudioTracks);
+-                // This callback doesn't have any data about the error, we need to rely on the error dialog
++                // Pitwall patch: VLC gives no error details here and the original released the player
++                // silently, so JS never learned playback had died. Report it so the app can retry/explain.
++                if (self.onVideoError) {
++                    self.onVideoError(@{
++                        @"target": self.reactTag,
++                        @"title": @"VLC",
++                        @"message": [NSString stringWithFormat:@"VLC playback error (media state %ld)", (long)_player.media.state]
++                    });
++                }
+                 [self _release];
+                 break;
+             default:

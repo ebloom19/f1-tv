@@ -85,7 +85,25 @@ feed gets is controlled by `PITWALL_PLAYER` in `.env` (then `npm run gen-env` an
 
 The HEVC flag is a name heuristic (`UHD` quality or the bare `F1-TV` brand) that matched every stream
 probed on the real panel. If a feed you pick is still black under `auto`, switch to `vlc`.
-Adding VLC requires a native rebuild: `cd ios && pod install && cd ..` then run from Xcode.
+Adding VLC requires a native rebuild: `npm install` (applies the `patches/` fix to the VLC view),
+`cd ios && pod install && cd ..`, then run from Xcode.
+
+### Reading the VLC badge
+
+A VLC feed carries a small badge in the bottom-right corner. It is the diagnostic when the picture
+is black:
+
+| Badge | Meaning |
+|---|---|
+| "VLC isn't in this build" overlay | The native module is missing: run `pod install` and rebuild from Xcode. |
+| `VLC · loading` | The view is mounted but VLC has not reported anything yet. |
+| `VLC · opening` / `buffering` | VLC is fetching the stream. Stuck here means the network path (HLS 302, token, slot) is the problem. |
+| `VLC · stopped` / `error` | VLC gave up; the app re-checks the playlist (401/403 → waits for a free slot) or shows "Playback failed". |
+| `VLC · retry n (ts)` / `(m3u8)` | The 15 s start watchdog remounted the player, alternating the HLS playlist and the continuous `.ts` URL. After 4 tries it fails with the last state in the message. |
+| `VLC · 1920×1080` | VLC is decoding video at that size. Black at this point is a rendering issue, not a stream issue. |
+
+Debug builds also print VLC's own log (`libvlc`, `hls`, `videotoolbox` lines) to the Xcode console;
+filter on `vlc` to see it.
 
 ## Tests
 

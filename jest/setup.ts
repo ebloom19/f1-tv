@@ -103,19 +103,29 @@ jest.mock('react-native-vlc-media-player', () => {
     accessibilityLabel?: string;
     muted?: boolean;
     source?: { uri?: string };
+    onOpen?: (e: unknown) => void;
     onPlaying?: (e: unknown) => void;
+    onStopped?: () => void;
     onError?: (e: unknown) => void;
   }) {
     React.useEffect(() => {
       const uri = props.source?.uri ?? '';
+      props.onOpen?.({ target: 0 });
       if (uri.includes('simulate-401') || uri.includes('simulate-fatal')) {
         props.onError?.({ target: 0 });
+      } else if (uri.includes('simulate-stopped')) {
+        props.onStopped?.();
       } else if (globalThis.__videoAutoLoad !== false) {
         props.onPlaying?.({ duration: 0, target: 0, seekable: false });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.source?.uri]);
-    return React.createElement(View, { testID: props.testID, accessibilityLabel: props.accessibilityLabel ?? 'vlc-player' });
+    // `source` is echoed onto the host view so tests can see which URL VLC was handed.
+    return React.createElement(View, {
+      testID: props.testID,
+      accessibilityLabel: props.accessibilityLabel ?? 'vlc-player',
+      source: props.source,
+    });
   }
   return { VLCPlayer, VlCPlayerView: VLCPlayer };
 });

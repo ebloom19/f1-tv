@@ -11,7 +11,7 @@ export type {
 } from './types.ts';
 export { XtreamError, isXtreamError } from './errors.ts';
 export type { XtreamErrorCode } from './errors.ts';
-export { normalizeBaseUrl, originOf, buildPlayerApiUrl, buildStreamUrl, parseM3uPlusLine } from './urls.ts';
+export { normalizeBaseUrl, originOf, buildPlayerApiUrl, buildStreamUrl, withStreamFormat, parseM3uPlusLine } from './urls.ts';
 export type { M3uPlusEntry } from './urls.ts';
 export { parseHls, resolveSegmentUrl } from './playlist.ts';
 export type { ParsedHls } from './playlist.ts';

@@ -15,6 +15,9 @@ Xtream Codes IPTV line. Development-only, own devices. Repo root is the RN proje
 - Playback URL: `{baseUrl}/live/{U}/{P}/{stream_id}.m3u8` → HTTP 302 to a tokenised edge host
   (`http://10005055.t04m.cc/live/U/P/6844.m3u8?token=…`), HLS v3, ~10 s TS segments with
   **relative** URIs (`/hlsr/<token>/U/P/6844/<hash>/6844_0.ts`). `.ts` also works (302 → continuous MPEG-TS).
+  Re-probed 2026-09-14: `.ts` answered 401 twice with `active_cons=0`, and the panel's edge (Envoy) returned
+  503 "upstream connect error" for a few minutes, so treat `.ts` as best-effort; the VLC player only tries it
+  as the alternate on a start-watchdog retry.
 - **`max_connections` = 1 and it is enforced.** A second concurrent stream gets HTTP 401 (panel) or 403
   (edge). An offline channel returns HTTP 200 with an empty `text/html` body (not a playlist).
   Measured slot accounting (6+ experiments, 2026-09-13):

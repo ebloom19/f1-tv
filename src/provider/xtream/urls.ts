@@ -63,6 +63,14 @@ export function buildStreamUrl(creds: XtreamCredentials, id: number, format: Str
   return `${base}/live/${enc(creds.username)}/${enc(creds.password)}/${id}.${format}`;
 }
 
+/**
+ * Swaps the container of an Xtream live URL (`…/live/U/P/{id}.m3u8` ⇄ `…/live/U/P/{id}.ts`),
+ * keeping any query string. URLs that don't follow that shape are returned unchanged.
+ */
+export function withStreamFormat(url: string, format: StreamFormat): string {
+  return url.replace(/(\/live\/[^/?#]+\/[^/?#]+\/\d+)\.(m3u8|ts)(?=$|[?#])/, `$1.${format}`);
+}
+
 export interface M3uPlusEntry {
   name: string;
   url: string;
