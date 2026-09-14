@@ -1,6 +1,8 @@
 import { ENV } from './env.generated.ts';
 import type { XtreamCredentials } from '../provider/xtream/types.ts';
 import { normalizeBaseUrl } from '../provider/xtream/urls.ts';
+import { parsePlayerMode } from '../player/choosePlayer.ts';
+import type { PlayerMode } from '../player/choosePlayer.ts';
 
 export interface ConfiguredEnv {
   baseUrl: string;
@@ -8,6 +10,7 @@ export interface ConfiguredEnv {
   password: string;
   m3u: string;
   label: string;
+  player: PlayerMode;
 }
 
 /** The generated (git-ignored) environment, with every field coerced to a string. */
@@ -19,6 +22,7 @@ export function getConfiguredEnv(): ConfiguredEnv {
     password: String(e.password ?? ''),
     m3u: String(e.m3u ?? ''),
     label: String(e.label ?? 'My line'),
+    player: parsePlayerMode(e.player),
   };
 }
 
@@ -34,4 +38,9 @@ export function getConfiguredCredentials(): XtreamCredentials | null {
     password: e.password,
     label: e.label || 'My line',
   };
+}
+
+/** Player mode from the generated env (`PITWALL_PLAYER`): auto | vlc | avplayer. */
+export function getPlayerMode(): PlayerMode {
+  return getConfiguredEnv().player;
 }

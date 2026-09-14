@@ -70,6 +70,23 @@ Debug builds allow cleartext traffic; the Leanback launcher intent and TV banner
 | Play/Pause | | | cycle audio: world feed → tile 1 → tile 2 |
 | Menu / Back | | | rail open: close it · rail closed: back to the hub, streams released |
 
+## Players: AVPlayer vs VLC (HEVC feeds)
+
+Apple's HLS refuses HEVC carried in MPEG-TS segments, which this provider uses for its F1-TV and
+UHD feeds, so AVPlayer plays their audio over a black frame. The app bundles VLC (`TVVLCKit`)
+as a second player; VLC demuxes the TS itself and hardware-decodes the HEVC. Which player a
+feed gets is controlled by `PITWALL_PLAYER` in `.env` (then `npm run gen-env` and reload):
+
+| `PITWALL_PLAYER` | Behaviour |
+|---|---|
+| `auto` (default) | AVPlayer for H.264 feeds (native pipeline, lowest latency); VLC only for feeds flagged HEVC-in-TS on Apple. Android always uses ExoPlayer, which plays HEVC-in-TS natively. |
+| `vlc` | VLC for every feed. One consistent path; immune to the HEVC name heuristic; slightly slower start. |
+| `avplayer` | Never use VLC (HEVC feeds show the "audio only" overlay). |
+
+The HEVC flag is a name heuristic (`UHD` quality or the bare `F1-TV` brand) that matched every stream
+probed on the real panel. If a feed you pick is still black under `auto`, switch to `vlc`.
+Adding VLC requires a native rebuild: `cd ios && pod install && cd ..` then run from Xcode.
+
 ## Tests
 
 ```bash

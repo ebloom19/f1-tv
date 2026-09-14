@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { playerKindFor } from '../player/Player';
 import type { DriverEntry, F1Catalogue, F1Channel } from '../catalogue/types';
 import { makeSourceId } from '../multiview/types';
 import type { SourceId } from '../multiview/types';
@@ -36,7 +37,7 @@ export function accountLine(accounts: XtreamAccount[], budget: number): string {
 /** What to watch when the user picks a driver (or data screen) from the hub. */
 /** On Apple, HEVC-in-TS feeds are audio-only; flag them in the label so the user can avoid them. */
 function feedLabel(ch: F1Channel): string {
-  return Platform.OS === 'ios' && ch.appleVideoUnsupported ? `${ch.label} · audio only` : ch.label;
+  return ch.appleVideoUnsupported && playerKindFor(ch) === 'avplayer' ? `${ch.label} · audio only` : ch.label;
 }
 
 export function selectionFor(catalogue: F1Catalogue, budget: number, id: SourceId): WatchSelection {

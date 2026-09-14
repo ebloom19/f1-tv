@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   BackHandler,
-  Platform,
   StyleSheet,
   Text,
   TVEventControl,
@@ -18,7 +17,7 @@ import type { Rect } from '../multiview/regions';
 import { createInitialState, maxDocked, reduce } from '../multiview/reducer';
 import type { MultiviewState, SourceId } from '../multiview/types';
 import type { ConnectionPool, SlotLease } from '../provider/pool';
-import { StreamPlayer } from '../player/StreamPlayer';
+import { Player, playerKindFor } from '../player/Player';
 import { useLeases } from '../player/useLeases';
 import { DriverChip } from '../ui/DriverChip';
 import type { ChipState } from '../ui/DriverChip';
@@ -329,7 +328,8 @@ export function WatchScreen({ pool, catalogue, initialMain, initialDocked, onExi
     <View style={styles.root} testID="watch-screen">
       {/* Main picture */}
       <View style={[styles.mainSlot, abs(layout.main)]} testID="main-slot">
-        <StreamPlayer
+        <Player
+          channel={main.src?.channel}
           uri={main.uri}
           headers={main.headers}
           muted={state.audio !== state.main}
@@ -350,12 +350,12 @@ export function WatchScreen({ pool, catalogue, initialMain, initialDocked, onExi
             <Text style={styles.switchText}>{`Switching to ${pendingSrc?.abbr ?? state.pendingSwitch}…`}</Text>
           </View>
         ) : null}
-        {!state.pendingSwitch && Platform.OS === 'ios' && main.src?.channel.appleVideoUnsupported ? (
+        {!state.pendingSwitch && main.src?.channel.appleVideoUnsupported && playerKindFor(main.src.channel) === 'avplayer' ? (
           <View style={styles.hevcOverlay} pointerEvents="none" testID="hevc-overlay">
             <Text style={styles.hevcTitle}>Audio only on Apple TV</Text>
             <Text style={styles.hevcText}>
-              This feed is HEVC in a transport stream, which Apple can’t play. Open the rail and pick a
-              Sky Sports F1 or International feed.
+              This feed is HEVC in a transport stream, which Apple’s player can’t show. Set PITWALL_PLAYER=vlc
+              (or auto) to route it through VLC, or pick a Sky Sports F1 / International feed.
             </Text>
           </View>
         ) : null}
@@ -396,7 +396,8 @@ export function WatchScreen({ pool, catalogue, initialMain, initialDocked, onExi
                 onLongPress={() => setMenuFor(id)}
                 testID={`tile-${id}`}
               >
-                <StreamPlayer
+                <Player
+                  channel={p.src?.channel}
                   uri={p.uri}
                   headers={p.headers}
                   muted={state.audio !== id}

@@ -9,7 +9,7 @@ import { fixtureCatalogue } from '../../testing/fixtureCatalogue';
 import { fakeAccount } from '../../testing/fakeAccount';
 
 const catalogue = fixtureCatalogue();
-const WORLD = 'world:6862';
+const WORLD = 'world:7929'; // the app's default world feed (H.264, plays on Apple); 6862 is HEVC and routes to VLC
 
 type VideoProps = { testID?: string; muted?: boolean; source?: { uri?: string; headers?: Record<string, string> } };
 
@@ -224,7 +224,7 @@ describe('WatchScreen', () => {
 
       expect(screen.getByText('1 connection · Select switches the feed')).toBeTruthy();
       expect(videos()).toHaveLength(1);
-      expect(videos()[0].source?.uri).toBe('http://panel.test/live/USER/PASS/6862.m3u8');
+      expect(videos()[0].source?.uri).toBe('http://panel.test/live/USER/PASS/7929.m3u8');
       expect(pool.inUse).toBe(1);
       expect(screen.queryByTestId('switch-overlay')).toBeNull();
 

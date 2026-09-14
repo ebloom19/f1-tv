@@ -80,6 +80,35 @@ jest.mock('react-native-video', () => {
   };
 });
 
+
+// react-native-vlc-media-player: same shape as the Video mock. Renders a View (testID passthrough,
+// accessibilityLabel "vlc-player" so tests can tell the players apart), fires onPlaying on mount, or
+// onError when the uri contains "simulate-401" / "simulate-fatal".
+jest.mock('react-native-vlc-media-player', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  function VLCPlayer(props: {
+    testID?: string;
+    accessibilityLabel?: string;
+    muted?: boolean;
+    source?: { uri?: string };
+    onPlaying?: (e: unknown) => void;
+    onError?: (e: unknown) => void;
+  }) {
+    React.useEffect(() => {
+      const uri = props.source?.uri ?? '';
+      if (uri.includes('simulate-401') || uri.includes('simulate-fatal')) {
+        props.onError?.({ target: 0 });
+      } else if (globalThis.__videoAutoLoad !== false) {
+        props.onPlaying?.({ duration: 0, target: 0, seekable: false });
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [props.source?.uri]);
+    return React.createElement(View, { testID: props.testID, accessibilityLabel: props.accessibilityLabel ?? 'vlc-player' });
+  }
+  return { VLCPlayer, VlCPlayerView: VLCPlayer };
+});
+
 jest.mock('react-native-safe-area-context', () => {
   // The library's jest mock is an ES default export; expose its members as named exports too.
   const mod = require('react-native-safe-area-context/jest/mock');

@@ -22,7 +22,8 @@
     "react": "19.2.0",
     "react-native": "npm:react-native-tvos@0.83.0-0",
     "react-native-safe-area-context": "^5.5.2",
-    "react-native-video": "^6.19.2"
+    "react-native-video": "^6.19.2",
+    "react-native-vlc-media-player": "^1.0.98"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

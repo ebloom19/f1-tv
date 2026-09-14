@@ -60,6 +60,8 @@ const vars = {
   m3u: pick('M3U'),
 };
 const label = pick('XTREAM_LABEL') || 'My line';
+// Player mode: auto (AVPlayer, VLC only for HEVC-in-TS on Apple) | vlc (VLC for everything) | avplayer
+const player = pick('PITWALL_PLAYER') || 'auto';
 
 const anySet = Object.values(vars).some(v => typeof v === 'string' && v.length > 0);
 
@@ -74,6 +76,7 @@ const values = {
   password: vars.password || '',
   m3u: vars.m3u || '',
   label,
+  player,
 };
 
 const content =
@@ -84,6 +87,7 @@ const content =
   `  password: ${JSON.stringify(values.password)},\n` +
   `  m3u: ${JSON.stringify(values.m3u)},\n` +
   `  label: ${JSON.stringify(values.label)},\n` +
+  `  player: ${JSON.stringify(values.player)},\n` +
   '};\n';
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
@@ -92,5 +96,5 @@ fs.writeFileSync(OUT, content, 'utf8');
 const status = k => (values[k] ? 'set' : 'empty');
 console.log(
   `gen-env: wrote ${REL} (baseUrl: ${status('baseUrl')}, username: ${status('username')}, ` +
-    `password: ${status('password')}, m3u: ${status('m3u')}, label: ${JSON.stringify(label)})`,
+    `password: ${status('password')}, m3u: ${status('m3u')}, label: ${JSON.stringify(label)}, player: ${JSON.stringify(player)})`,
 );
