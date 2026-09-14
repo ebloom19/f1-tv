@@ -15,10 +15,16 @@ const lease: SlotLease = { accountIndex: 0, release: () => {} };
 const headers = { 'User-Agent': 'Pitwall/1.0 (AppleTV; tvOS)' };
 
 describe('vlcInitOptions', () => {
-  it('passes the User-Agent to libvlc and a live-friendly cache', () => {
+  it('passes the User-Agent to libvlc, a deep live buffer and stream-clock trust', () => {
     const opts = vlcInitOptions(headers);
     expect(opts[0]).toBe('--http-user-agent=Pitwall/1.0 (AppleTV; tvOS)');
-    expect(opts).toContain('--network-caching=1500');
+    expect(opts).toContain('--network-caching=3000');
+    expect(opts).toContain('--clock-jitter=0');
+    expect(opts).toContain('--clock-synchro=0');
+  });
+
+  it('takes the buffer depth from PITWALL_VLC_CACHING_MS', () => {
+    expect(vlcInitOptions(headers, { cachingMs: 4500 })).toContain('--network-caching=4500');
   });
 });
 

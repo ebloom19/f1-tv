@@ -83,6 +83,11 @@ feed gets is controlled by `PITWALL_PLAYER` in `.env` (then `npm run gen-env` an
 | `vlc` | VLC for every feed. One consistent path; immune to the HEVC name heuristic; slightly slower start. |
 | `avplayer` | Never use VLC (HEVC feeds show the "audio only" overlay). |
 
+`PITWALL_VLC_CACHING_MS` (default `3000`) sets VLC's network buffer. If a UHD feed stutters, raise it
+to `5000`; if you want it closer to live, lower it towards `1500`. Re-run `npm run gen-env` and
+reload; no rebuild needed. VLC also runs with `clock-jitter=0` / `clock-synchro=0` so it trusts the
+stream's own timing instead of periodically resyncing, which on live TS shows up as stutter.
+
 The HEVC flag is a name heuristic (`UHD` quality or the bare `F1-TV` brand) that matched every stream
 probed on the real panel. If a feed you pick is still black under `auto`, switch to `vlc`.
 Adding VLC requires a native rebuild: `npm install` (applies the `patches/` fix to the VLC view),

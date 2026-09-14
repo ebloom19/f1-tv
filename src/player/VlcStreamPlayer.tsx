@@ -6,6 +6,7 @@ import type { StreamPlayerProps } from './StreamPlayer';
 import { withStreamFormat } from '../provider/xtream/urls';
 import type { StreamFormat } from '../provider/xtream/types';
 import { colors, font, spacing, timing } from '../ui/theme';
+import { getVlcCachingMs } from '../config/env';
 
 /** Minimal prop surface we use; the package's own typings omit `export` on its classes. */
 interface VlcNativeProps {
@@ -85,10 +86,29 @@ async function classifyByPlaylist(uri: string, headers: Record<string, string>):
   }
 }
 
-/** libvlc options: identify like a player (the panel 503s curl's UA) and keep a live-friendly buffer. */
-export function vlcInitOptions(headers: Record<string, string>): string[] {
+export interface VlcTuning {
+  /** Network buffer in ms. Live UHD over 10 s HLS segments needs a deep one; each ms is latency. */
+  cachingMs: number;
+}
+
+/**
+ * libvlc options for a live IPTV feed on an Apple TV.
+ * - identify like a player (the panel 503s curl's UA) and reconnect on drops;
+ * - a deep network buffer (`PITWALL_VLC_CACHING_MS`, default 3000) so segment fetch jitter never
+ *   starves the decoder;
+ * - `clock-jitter=0` / `clock-synchro=0`: trust the stream's own PCR timing instead of VLC's input
+ *   clock resync, which on jittery live TS shows up as periodic stutter and frame drops;
+ * - VideoToolbox is on by default and hardware-only, so HEVC decodes on the chip (not tuned here).
+ */
+export function vlcInitOptions(headers: Record<string, string>, tuning: VlcTuning = { cachingMs: getVlcCachingMs() }): string[] {
   const ua = headers['User-Agent'] ?? headers['user-agent'];
-  const opts = ['--network-caching=1500', '--http-reconnect', '--no-video-title-show'];
+  const opts = [
+    `--network-caching=${Math.round(tuning.cachingMs)}`,
+    '--clock-jitter=0',
+    '--clock-synchro=0',
+    '--http-reconnect',
+    '--no-video-title-show',
+  ];
   if (ua) {
     opts.unshift(`--http-user-agent=${ua}`);
   }

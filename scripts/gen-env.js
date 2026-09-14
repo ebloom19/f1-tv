@@ -62,6 +62,8 @@ const vars = {
 const label = pick('XTREAM_LABEL') || 'My line';
 // Player mode: auto (AVPlayer, VLC only for HEVC-in-TS on Apple) | vlc (VLC for everything) | avplayer
 const player = pick('PITWALL_PLAYER') || 'auto';
+// VLC network buffer in ms (live UHD over HLS is smoother with a deeper buffer; costs that much latency).
+const vlcCachingMs = pick('PITWALL_VLC_CACHING_MS') || '3000';
 
 const anySet = Object.values(vars).some(v => typeof v === 'string' && v.length > 0);
 
@@ -77,6 +79,7 @@ const values = {
   m3u: vars.m3u || '',
   label,
   player,
+  vlcCachingMs,
 };
 
 const content =
@@ -88,6 +91,7 @@ const content =
   `  m3u: ${JSON.stringify(values.m3u)},\n` +
   `  label: ${JSON.stringify(values.label)},\n` +
   `  player: ${JSON.stringify(values.player)},\n` +
+  `  vlcCachingMs: ${JSON.stringify(values.vlcCachingMs)},\n` +
   '};\n';
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
@@ -96,5 +100,5 @@ fs.writeFileSync(OUT, content, 'utf8');
 const status = k => (values[k] ? 'set' : 'empty');
 console.log(
   `gen-env: wrote ${REL} (baseUrl: ${status('baseUrl')}, username: ${status('username')}, ` +
-    `password: ${status('password')}, m3u: ${status('m3u')}, label: ${JSON.stringify(label)}, player: ${JSON.stringify(player)})`,
+    `password: ${status('password')}, m3u: ${status('m3u')}, label: ${JSON.stringify(label)}, player: ${JSON.stringify(player)}, vlcCachingMs: ${JSON.stringify(vlcCachingMs)})`,
 );
