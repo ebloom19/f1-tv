@@ -68,7 +68,7 @@ export function classifyPlaylistResponse(
     };
   }
   if (httpStatus === 503) {
-    return { status: 'error', httpStatus, message: 'HTTP 503 — the panel refused the request (User-Agent blocked?)' };
+    return { status: 'error', httpStatus, message: 'HTTP 503 — the panel is unavailable (provider outage, or the User-Agent is blocked); try again in a few minutes' };
   }
   return { status: 'error', httpStatus, message: `HTTP ${httpStatus}` };
 }
@@ -158,10 +158,10 @@ export class XtreamClient {
     try {
       res = await this.doFetch(url);
     } catch (err) {
-      throw new XtreamError('NETWORK', `Network error: ${errorMessage(err)}`);
+      throw new XtreamError('NETWORK', `Network error: ${errorMessage(err)} (no answer from the panel — provider outage, wrong host, or no internet)`);
     }
     if (res.status === 503) {
-      throw new XtreamError('BLOCKED', 'The panel refused the request (HTTP 503) — check the User-Agent', 503);
+      throw new XtreamError('BLOCKED', 'The panel is unavailable (HTTP 503): usually a provider outage, or the User-Agent is blocked. Try again in a few minutes.', 503);
     }
     if (res.status === 401 || res.status === 403) {
       throw new XtreamError('AUTH_FAILED', `The panel rejected the credentials (HTTP ${res.status})`, res.status);
