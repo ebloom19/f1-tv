@@ -96,15 +96,18 @@ export interface VlcTuning {
  * - identify like a player (the panel 503s curl's UA) and reconnect on drops;
  * - a deep network buffer (`PITWALL_VLC_CACHING_MS`, default 3000) so segment fetch jitter never
  *   starves the decoder;
- * - `clock-jitter=0` / `clock-synchro=0`: trust the stream's own PCR timing instead of VLC's input
- *   clock resync, which on jittery live TS shows up as periodic stutter and frame drops;
+ * - `clock-synchro=0` (disable input clock synchronisation): libvlc's own documented remedy for
+ *   "jerky playback of network streams" on real-time sources. `--clock-jitter` is deliberately NOT
+ *   passed: libvlc documents it as "the maximum input delay jitter that the synchronisation
+ *   algorithms should try to compensate (in milliseconds)", default 5000, so a LOW value means LESS
+ *   tolerance. The `--clock-jitter=0` this file used to send told VLC to absorb no arrival jitter at
+ *   all and was itself a cause of the periodic stutter it was meant to cure;
  * - VideoToolbox is on by default and hardware-only, so HEVC decodes on the chip (not tuned here).
  */
 export function vlcInitOptions(headers: Record<string, string>, tuning: VlcTuning = { cachingMs: getVlcCachingMs() }): string[] {
   const ua = headers['User-Agent'] ?? headers['user-agent'];
   const opts = [
     `--network-caching=${Math.round(tuning.cachingMs)}`,
-    '--clock-jitter=0',
     '--clock-synchro=0',
     '--http-reconnect',
     '--no-video-title-show',

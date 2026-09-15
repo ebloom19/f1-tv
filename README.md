@@ -85,8 +85,14 @@ feed gets is controlled by `PITWALL_PLAYER` in `.env` (then `npm run gen-env` an
 
 `PITWALL_VLC_CACHING_MS` (default `3000`) sets VLC's network buffer. If a UHD feed stutters, raise it
 to `5000`; if you want it closer to live, lower it towards `1500`. Re-run `npm run gen-env` and
-reload; no rebuild needed. VLC also runs with `clock-jitter=0` / `clock-synchro=0` so it trusts the
-stream's own timing instead of periodically resyncing, which on live TS shows up as stutter.
+reload; no rebuild needed. VLC also runs with `clock-synchro=0`, libvlc's own documented fix for
+"jerky playback of network streams".
+
+`--clock-jitter` is deliberately not passed. libvlc documents it as "the maximum input delay jitter
+that the synchronisation algorithms should try to compensate (in milliseconds)", default 5000, so a
+**low** value means **less** tolerance. An earlier version of this app sent `--clock-jitter=0`
+believing it meant "trust the stream's own timing"; it actually told VLC to absorb no arrival jitter
+at all and was itself a cause of the stutter it was meant to cure.
 
 The HEVC flag is a name heuristic (`UHD` quality or the bare `F1-TV` brand) that matched every stream
 probed on the real panel. If a feed you pick is still black under `auto`, switch to `vlc`.

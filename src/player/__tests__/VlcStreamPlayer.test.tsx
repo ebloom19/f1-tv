@@ -15,12 +15,17 @@ const lease: SlotLease = { accountIndex: 0, release: () => {} };
 const headers = { 'User-Agent': 'Pitwall/1.0 (AppleTV; tvOS)' };
 
 describe('vlcInitOptions', () => {
-  it('passes the User-Agent to libvlc, a deep live buffer and stream-clock trust', () => {
+  it('passes the User-Agent to libvlc, a deep buffer and the network-stream clock fix', () => {
     const opts = vlcInitOptions(headers);
     expect(opts[0]).toBe('--http-user-agent=Pitwall/1.0 (AppleTV; tvOS)');
     expect(opts).toContain('--network-caching=3000');
-    expect(opts).toContain('--clock-jitter=0');
     expect(opts).toContain('--clock-synchro=0');
+  });
+
+  // libvlc: clock-jitter is the jitter the sync algorithms should COMPENSATE (default 5000 ms), so
+  // 0 means absorb nothing — the opposite of what this app wanted, and a stutter source itself.
+  it('never tells VLC to tolerate zero input jitter', () => {
+    expect(vlcInitOptions(headers).join(' ')).not.toContain('--clock-jitter');
   });
 
   it('takes the buffer depth from PITWALL_VLC_CACHING_MS', () => {
